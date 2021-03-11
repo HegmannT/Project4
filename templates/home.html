@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+    	<title>Home</title>
+
+ 	<!-- Leaflet Headder requirements as per Leaflet website for maps -->
+	 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   	integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   	crossorigin=""/>
+
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   	integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   	crossorigin=""></script>
+
+	
+</head>
+
+<!-- Set up Quick Style -->
+<style>
+.mainpage {margin: auto; width: 50%;text-align: center;}
+.outlined { outline: 3px solid black;}
+.background { background-color: #f2f2f2;}
+.purple {color: purple; text-align: center;}
+.green {color: green; text-align: center;}
+</style>
+
+<body class = "background">
+	<div class="mainpage">
+		<h3><b>Welcome To ENGO 551 Lab 4 Calgary Schools & Hospitals Turf Map</b></h3>
+		<div class="mainpage"> Lab by Tanya Hegmann </div>
+		<div> -------------------------------------------------------------------------------------------- </div>
+		<p> To toggle layers and styling, please use the layer control in the top right corner </p>
+		<div> -------------------------------------------------------------------------------------------- </div>
+		<div class="purple">
+		<p>A total of {{numhospitals}} hospitals and clinics have been found in our database. </p>
+		<p>They are represented by the PurpleIcons</p>
+		<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png" width="5%">
+		</div>
+		
+		<div class="green">
+		<p>A total of {{numschools}} schools have been found in our database. </p>
+		<p>They are represented by the Green Icons</p>
+		<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png" width="5%">
+		</div>
+
+		<p>When Selecting a school, the nearest hospital/clinic will light up Red</p>		
+		
+
+	</div>
+	
+	
+	
+	
+	<!-- Set Up Map Paramaters -->
+	<div class = "outlined">
+	<div id="CalgaryMap" style="height: 600px; display: block; margin-left: auto; margin-right: auto; width: 100%;"></div>
+	</div>
+
+	<script>
+		
+		<!-- Using the amazing opensource leaflet-color-markers from -->
+		<!-- https://github.com/pointhi/leaflet-color-markers -->
+		<!-- Green Icon For Schools --> 
+		var greenIcon = new L.Icon({
+		  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+		  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+		  iconSize: [19, 31],
+		  iconAnchor: [12, 41],
+		  popupAnchor: [1, -34],
+		  shadowSize: [30, 30]
+		});
+		<!-- Purple Icon For Hospitals/Clinics--> 
+		var purpleIcon = new L.Icon({
+		  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+		  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+		  iconSize: [25, 41],
+		  iconAnchor: [12, 41],
+		  popupAnchor: [1, -34],
+		  shadowSize: [41, 41]
+		});
+
+
+		<!-- Initalize Map -->
+		<!-- Calgary Coordinates 51.0447, -114.0719 -->
+		var mymap = L.map('CalgaryMap').setView([51.05, -114.06], 10);
+		var hospitalmarkerlist = L.layerGroup();
+		var schoolmarkerlist = L.layerGroup();
+
+		
+		<!-- Mapbox Streettyle Layer --> <!-- ckm02dzkc2zf817l50uwan87g -->
+		var stylized = L.tileLayer('https://api.mapbox.com/styles/v1/thegmann/ckm09cdi2367u17l5983qtdca/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhlZ21hbm4iLCJhIjoiY2tsendrbzc2MW44bTJucGIwcGthajVvZCJ9.Oma0SwAX6kXvnw_T66TXHQ', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+		'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1 });
+
+		<!-- Mapbox Original Layer -->
+		var original = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+		'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1 }).addTo(mymap);
+
+
+
+		<!-- Mapbox Schools Layer -->
+		{% for schoolsearchresults in schoolsearchresults%}
+			var schoolmarker = L.marker([{{schoolsearchresults.latitude}}, {{schoolsearchresults.longitude}}], {icon: greenIcon});
+			
+			schoolmarker.bindPopup("<b>School Information:</b><br> Name: {{schoolsearchresults.nameab}} <br> School Type: {{schoolsearchresults.typeof}} <br> Board: {{schoolsearchresults.board}} <br> Address: {{schoolsearchresults.addressab}}")
+			schoolmarker.addTo(schoolmarkerlist);
+			schoolmarker.addTo(mymap);
+		{% endfor %}
+
+		
+
+		<!-- Mapbox Hospital/Clinics Layer -->
+		
+		{% for hospitalsearchresults in hospitalsearchresults%}
+			var hospitalmarker = L.marker([{{hospitalsearchresults.latitude}}, {{hospitalsearchresults.longitude}}], {icon: purpleIcon});
+			
+			hospitalmarker.bindPopup("<b>Information:</b><br> Name: {{hospitalsearchresults.name}} <br> Center Type: {{hospitalsearchresults.typeof}} <br> Address: {{hospitalsearchresults.address}}")
+			hospitalmarker.addTo(hospitalmarkerlist);
+			hospitalmarker.addTo(mymap);
+			
+		{% endfor %}
+
+
+		var baseLayers = {
+		"Stylized ON": stylized,
+		"Stylized OFF": original
+		};
+
+		var pointslayer = {
+		"Schools": schoolmarkerlist,
+		"Hospitals and Clinics": hospitalmarkerlist
+		};
+
+		L.control.layers(baseLayers,pointslayer).addTo(mymap);
+
+
+
+
+		<!-- Turf Code --> 
+
+		<!-- Attempts at creating test feature collections to see if they work-->
+		var hospitalpoints = turf.featureCollection([
+		    turf.point([51.064182937103176, -114.13217660430655]),
+		    turf.point([51.07901634932495, -113.98394351382268]),
+		    turf.point([51.07455988033879, -114.14795761511185])
+		]);
+		var libraries = turf.featureCollection([
+		    turf.point([51.15841731143543, -113.95651306852255]),
+		    turf.point([51.05863392955397, -113.86774569469964])
+		]);
+		mymap.addSource('nearesthospital', {
+		  type: 'geojson',
+		  data: {
+		    type: 'FeatureCollection',
+		    features: [
+		    ]
+		  }
+		});
+
+
+		<!-- Following template of code from provided tutorial -->
+		<!-- https://docs.mapbox.com/help/tutorials/analysis-with-turf/ -->
+		<!-- For a click event -->
+		mymap.on('click', function(e) {
+
+		  var schoolFeatures = mymap.queryRenderedFeatures(e.point, libraries);
+		  
+		  if (!schoolFeatures.length) {
+		    return;}
+		 
+		  var schoolFeature = schoolFeatures[0];
+
+		  var nearestHospital = turf.nearest(schoolFeature, hospitalpoints);
+
+		  if (nearestHospital !== null) {
+		    mymap.getSource('nearesthospital').setData({
+		      type: 'FeatureCollection',
+ 		      features: [nearestHospital]
+		    });
+
+		   mymap.addLayer({
+		      id: 'nearesthospital',
+		      type: 'circle',
+		      source: 'nearesthospital',
+		      paint: {
+		        'circle-radius': 12,
+		        'circle-color': '#486DE0'
+				      }
+		    }, 'hospitalmarkerlist');
+		  }
+		});
+		
+
+
+	</script>
+	
+
+	
+	
+
+	<div class="mainpage"> -------------------------------------------------------------------------------------------- </div>
+	
+	<!-- Printing whats in the Query search results for reference --> 
+	
+	{% for hospitalsearchresults in hospitalsearchresults%}
+		<li> <b> Type of: </b> {{hospitalsearchresults.typeof}} </li>
+		<li> <b> Name: </b> {{hospitalsearchresults.name}} </li>
+		<li> <b> Adress: </b> {{hospitalsearchresults.address}} </li>
+		<li> <b> Location: </b> {{hospitalsearchresults.location}} </li>
+		<li> -------------------------------------- </li>
+	{% endfor %}
+
+	<div class="mainpage"> -------------------------------------------------------------------------------------------- </div>
+	
+	{% for schoolsearchresults in schoolsearchresults%}
+		<li> <b> Name: </b> {{schoolsearchresults.name}} </li>
+		<li> <b> Location: </b> {{schoolsearchresults.location}} </li>
+		<li> -------------------------------------- </li>
+	{% endfor %}
+
+
+</body>
+</html>
