@@ -146,13 +146,13 @@
 
 		<!-- Attempts at creating test feature collections to see if they work-->
 		var hospitalpoints = turf.featureCollection([
-		    turf.point([51.064182937103176, -114.13217660430655]),
-		    turf.point([51.07901634932495, -113.98394351382268]),
-		    turf.point([51.07455988033879, -114.14795761511185])
+		    turf.point([-114.13217660430655, 51.064182937103176]),
+		    turf.point([-113.98394351382268, 51.07901634932495]),
+		    turf.point([-114.14795761511185, 51.07455988033879])
 		]);
 		var libraries = turf.featureCollection([
-		    turf.point([51.15841731143543, -113.95651306852255]),
-		    turf.point([51.05863392955397, -113.86774569469964])
+		    turf.point([-113.95651306852255,51.15841731143543]),
+		    turf.point([-113.86774569469964,51.05863392955397])
 		]);
 		mymap.addSource('nearesthospital', {
 		  type: 'geojson',
